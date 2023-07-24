@@ -1,6 +1,7 @@
-import {useContext, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {AuthContext} from "../contexts/AuthorizationContext";
 import * as sha1 from "sha1";
+import {GetRememberData, SetRememberData} from "../services/Storage";
 
 const Login = () => {
     const auth = useContext(AuthContext);
@@ -9,8 +10,26 @@ const Login = () => {
     const [password, setPassword] = useState(null);
     const [remember, setRemember] = useState(false);
 
+    useEffect(() => {
+        if (!auth.user && !email && !password) {
+            const data = GetRememberData();
+
+            if (data) {
+                setRemember(true);
+                if (data.email) {
+                    setEmail(data.email);
+                }
+                if (data.password) {
+                    setPassword(data.password);
+                }
+            }
+        }
+    }, []);
+
     const loginSubmit = (event) => {
         event.preventDefault();
+        SetRememberData(remember ? {email, password} : null);
+
         auth.login({
             email: email,
             password: sha1(password)
@@ -28,6 +47,7 @@ const Login = () => {
                                 type="email"
                                 className="form-control"
                                 id="email"
+                                value={email}
                                 aria-describedby="emailHelp"
                                 placeholder="Enter email"
                                 onChange={event => setEmail(event.target.value)}
@@ -39,6 +59,7 @@ const Login = () => {
                                 type="password"
                                 className="form-control"
                                 id="password"
+                                value={password}
                                 placeholder="Password"
                                 onChange={event => setPassword(event.target.value)}
                             />
@@ -48,6 +69,7 @@ const Login = () => {
                                 type="checkbox"
                                 className="form-check-input"
                                 id="remember"
+                                checked={remember}
                                 onChange={event => setRemember(event.target.checked)}
                             />
                             <label className="form-check-label">Remember</label>
